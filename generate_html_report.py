@@ -4,19 +4,32 @@
 生成HTML静态展示页面
 """
 
-import pandas as pd
 import json
+import sys
+import os
 
-# 从Excel读取数据
-excel_file = "西藏行程分析报告.xlsx"
+# 导入分析模块
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from travel_analyzer import analyze_itinerary
 
-# 读取详细行程数据
-df = pd.read_excel(excel_file, sheet_name='详细行程')
-summary_df = pd.read_excel(excel_file, sheet_name='汇总统计')
+# 直接调用分析函数获取数据
+print("正在分析行程数据...")
+itinerary_data = analyze_itinerary()
 
-# 转换为字典列表
-itinerary_data = df.to_dict('records')
-summary_data = dict(zip(summary_df['统计项'], summary_df['数值']))
+# 计算汇总统计
+summary_data = {
+    '总天数': len(itinerary_data),
+    '总估算距离(km)': sum(item['估算距离(km)'] for item in itinerary_data),
+    '总实际距离(km)': sum(item['实际距离(km)'] for item in itinerary_data),
+    '总估算时间(小时)': sum(item['估算时间(小时)'] for item in itinerary_data),
+    '总实际时间(小时)': sum(item['实际时间(小时)'] for item in itinerary_data),
+    '平均每日距离(km)': round(sum(item['实际距离(km)'] for item in itinerary_data) / len(itinerary_data), 1),
+    '平均每日时间(小时)': round(sum(item['实际时间(小时)'] for item in itinerary_data) / len(itinerary_data), 1),
+    '最长单日距离(km)': max(item['实际距离(km)'] for item in itinerary_data),
+    '最长单日时间(小时)': max(item['实际时间(小时)'] for item in itinerary_data),
+    '最短单日距离(km)': min(item['实际距离(km)'] for item in itinerary_data),
+    '最短单日时间(小时)': min(item['实际时间(小时)'] for item in itinerary_data)
+}
 
 # 准备图表数据
 days = [f"Day {i+1}" for i in range(len(itinerary_data))]
