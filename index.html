@@ -1,631 +1,777 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>西藏9日冬季探险环线 - 行程分析报告</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <meta name="referrer" content="no-referrer">
+    <title>2026 新疆冬日极境之旅</title>
+    <script type="text/javascript">
+        // window._AMapSecurityConfig = {
+        //     securityJsCode: 'YOUR_AMAP_SECURITY_KEY',
+        // }
+    </script>
+    <script
+        src="https://webapi.amap.com/maps?v=2.0&key=a2b2cd8952307f5f7aae2dd651e8f95d&plugin=AMap.ToolBar,AMap.Scale"></script>
     <style>
+        :root {
+            /* Palette: Snow & Ice focus with warmth highlights */
+            --bg-color: #0f1623;
+            --glass-bg: rgba(22, 30, 46, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-color: #38bdf8;
+            /* Icy Blue */
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --highlight: #f472b6;
+            /* Sunset Pink */
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --font-main: 'PingFang SC', 'Microsoft YaHei', 'Inter', sans-serif;
+            --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+
+        /* --- Map Container --- */
+        #map-container {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+            background: #1e293b;
+        }
+
+        /* --- Itinerary Sidebar (Glassmorphism) --- */
+        #sidebar {
+            width: 500px;
+            height: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            transition: transform 0.3s var(--ease-out);
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Header */
+        header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header h2 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        /* Timeline Scroller */
+        #itinerary-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        #itinerary-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #itinerary-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .day-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-out);
+            position: relative;
             overflow: hidden;
         }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
+
+        .day-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-color);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+
+        .day-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .day-card.active {
+            background: linear-gradient(145deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.02));
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .day-card.active::before {
+            opacity: 1;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-tag {
+            font-size: 0.85rem;
             font-weight: 700;
+            color: var(--accent-color);
         }
-        
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
+
+        .date-tag {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
-        
-        .content {
-            padding: 40px;
+
+        .route-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
         }
-        
-        .section {
-            margin-bottom: 50px;
+
+        .meta-info {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
         }
-        
+
+        /* Details Section */
+        .details {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .day-card.active .details {
+            display: block;
+        }
+
         .section-title {
-            font-size: 1.8em;
-            color: #667eea;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
+            font-size: 0.95rem;
+            color: var(--highlight);
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.5rem;
         }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+
+        .tips-box {
+            background: rgba(244, 114, 182, 0.1);
+            border: 1px solid rgba(244, 114, 182, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #fce7f3;
+            margin-bottom: 1rem;
         }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-            transition: transform 0.3s;
+
+        .alert-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            color: #fecaca;
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
         }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
+
+        .poi-list {
+            list-style: none;
         }
-        
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
+
+        .poi-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+            border: 1px solid var(--glass-border);
         }
-        
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        
-        .chart-container {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 20px 0;
-        }
-        
-        .itinerary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .itinerary-table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .itinerary-table th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-        
-        .itinerary-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .itinerary-table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .itinerary-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .risk-badge {
-            display: inline-block;
-            padding: 5px 12px;
+
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 0.8rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            color: #fff;
+            background: #ff2442;
+            /* Xiaohongshu red */
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.85em;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .link-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Image Gallery */
+        .img-gallery {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        .img-gallery::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .img-gallery::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .gallery-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s;
+            cursor: zoom-in;
+            background-color: #334155;
+        }
+
+        .gallery-img:hover {
+            transform: scale(1.05);
+            z-index: 2;
+        }
+
+        /* Overview Button */
+        #overview-btn-container {
+            padding: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        #overview-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: #0f1623;
+            border: none;
+            border-radius: 12px;
             font-weight: 600;
-            margin-left: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        
-        .risk-high {
-            background: #ff6b6b;
-            color: white;
+
+        #overview-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px var(--accent-glow);
         }
-        
-        .risk-medium {
-            background: #ffd93d;
-            color: #333;
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .risk-low {
-            background: #6bcf7f;
-            color: white;
-        }
-        
-        .recommendations {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin: 20px 0;
-        }
-        
-        .recommendation-item {
-            padding: 15px;
-            margin: 10px 0;
-            background: white;
-            border-left: 4px solid #667eea;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        
-        .recommendation-item.important {
-            border-left-color: #ff6b6b;
-            background: #fff5f5;
-        }
-        
-        .recommendation-item.strong {
-            border-left-color: #ffd93d;
-            background: #fffbf0;
-        }
-        
-        .recommendation-title {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        
-        .recommendation-item.important .recommendation-title {
-            color: #ff6b6b;
-        }
-        
-        .recommendation-item.strong .recommendation-title {
-            color: #ff9800;
-        }
-        
-        .footer {
-            background: #2c3e50;
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .difference-positive {
-            color: #6bcf7f;
-            font-weight: 600;
-        }
-        
-        .difference-negative {
-            color: #ff6b6b;
-            font-weight: 600;
-        }
-        
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
+            body {
+                flex-direction: column;
             }
-            
-            .content {
-                padding: 20px;
+
+            #sidebar {
+                width: 100%;
+                height: 50vh;
+                order: 2;
+                border-right: none;
+                border-top: 1px solid var(--glass-border);
             }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
+
+            #map-container {
+                height: 50vh;
+                order: 1;
             }
-            
-            .itinerary-table {
-                font-size: 0.9em;
-            }
-            
-            .itinerary-table th,
-            .itinerary-table td {
-                padding: 10px;
+
+            .gallery-img {
+                width: 100px;
+                height: 100px;
             }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏔️ 西藏9日冬季探险环线</h1>
-            <p>行程分析与可行性评估报告</p>
-            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">基于高德地图API实际路径规划数据</p>
-        </div>
-        
-        <div class="content">
-            <!-- 总体数据概览 -->
-            <div class="section">
-                <h2 class="section-title">📊 总体数据概览</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">9</div>
-                        <div class="stat-label">总行程天数</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">3671.5</div>
-                        <div class="stat-label">总行程距离 (公里)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">57.8</div>
-                        <div class="stat-label">总行车时间 (小时)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">407.9</div>
-                        <div class="stat-label">平均每日距离 (公里)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">6.4</div>
-                        <div class="stat-label">平均每日时间 (小时)</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 图表分析 -->
-            <div class="section">
-                <h2 class="section-title">📈 数据分析图表</h2>
-                <div class="chart-container">
-                    <canvas id="distanceChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <canvas id="timeChart"></canvas>
-                </div>
-            </div>
-            
-            <!-- 每日行程详情 -->
-            <div class="section">
-                <h2 class="section-title">🗺️ 每日行程详情</h2>
-                <table class="itinerary-table">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>行程路线</th>
-                            <th>实际距离</th>
-                            <th>实际时间</th>
-                            <th>时间差异</th>
-                            <th>活动安排</th>
-                            <th>住宿</th>
-                            <th>风险提示</th>
-                        </tr>
-                    </thead>
-                    <tbody>
 
-                        <tr>
-                            <td><strong>2024-12-22</strong><br><small>周日</small></td>
-                            <td>林芝米林机场 → 林芝市区</td>
-                            <td>53.2 km</td>
-                            <td>0.9 小时</td>
-                            <td class="difference-positive">-0.1 小时</td>
-                            <td>接机，寻找天空之树</td>
-                            <td>林芝八一镇</td>
-                            <td> </td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-23</strong><br><small>周一</small></td>
-                            <td>林芝 → 色季拉山口 → 波密 → 墨脱</td>
-                            <td>250.0 km</td>
-                            <td>6.0 小时</td>
-                            <td class="difference-positive">0 小时</td>
-                            <td>观南迦巴瓦峰，穿越鲁朗林海，进入墨脱</td>
-                            <td>墨脱县城</td>
-                            <td>扎墨公路通行风险 <span class="risk-badge risk-high">⚠️ 高风险</span></td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-24</strong><br><small>周二</small></td>
-                            <td>墨脱 → 波密 → 然乌湖</td>
-                            <td>200.0 km</td>
-                            <td>5.0 小时</td>
-                            <td class="difference-positive">0 小时</td>
-                            <td>墨脱热带雨林，然乌湖日落</td>
-                            <td>然乌镇</td>
-                            <td> </td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-25</strong><br><small>周三</small></td>
-                            <td>然乌湖 → 来古冰川 → 波密 → 林芝</td>
-                            <td>356.0 km</td>
-                            <td>6.9 小时</td>
-                            <td class="difference-positive">-0.1 小时</td>
-                            <td>然乌湖晨景，来古冰川深度游</td>
-                            <td>林芝八一镇</td>
-                            <td> </td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-26</strong><br><small>周四</small></td>
-                            <td>林芝 → 拉萨</td>
-                            <td>390.0 km</td>
-                            <td>4.4 小时</td>
-                            <td class="difference-positive">-0.6 小时</td>
-                            <td>缓冲日，布达拉宫广场</td>
-                            <td>拉萨市</td>
-                            <td> </td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-27</strong><br><small>周五</small></td>
-                            <td>拉萨 → 羊卓雍措景区 → 卡若拉冰川 → 日喀则</td>
-                            <td>359.2 km</td>
-                            <td>6.1 小时</td>
-                            <td class="difference-positive">0 小时</td>
-                            <td>羊卓雍措全天游览</td>
-                            <td>日喀则市</td>
-                            <td> </td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-28</strong><br><small>周六</small></td>
-                            <td>日喀则 → 佩枯措观景台 → 阿玛直米雪山 → 日喀则</td>
-                            <td>1049.5 km</td>
-                            <td>15.9 小时</td>
-                            <td class="difference-negative">+0.1 小时</td>
-                            <td>佩枯措和阿玛直米雪山观景</td>
-                            <td>日喀则市</td>
-                            <td>往返行程距离超长，实际约1050公里，15.75小时 <span class="risk-badge risk-high">⚠️ 高风险</span></td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-29</strong><br><small>周日</small></td>
-                            <td>日喀则 → 扎什伦布寺 → 当雄</td>
-                            <td>329.9 km</td>
-                            <td>4.5 小时</td>
-                            <td class="difference-positive">-1.5 小时</td>
-                            <td>参观扎什伦布寺，前往纳木措区域</td>
-                            <td>当雄县</td>
-                            <td> </td>
-                        </tr>
-    
-                        <tr>
-                            <td><strong>2024-12-30</strong><br><small>周一</small></td>
-                            <td>当雄 → 纳木措国家风景区 → 拉萨 → 林芝机场</td>
-                            <td>683.7 km</td>
-                            <td>8.1 小时</td>
-                            <td class="difference-positive">0 小时</td>
-                            <td>纳木措游览，返程送机</td>
-                            <td>行程结束</td>
-                            <td>车程极长，存在误机风险 <span class="risk-badge risk-high">⚠️ 高风险</span></td>
-                        </tr>
-    
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- 关键风险点 -->
-            <div class="section">
-                <h2 class="section-title">⚠️ 关键风险点分析</h2>
-                <div class="recommendations">
+    <div id="sidebar">
+        <header>
+            <h1>冬日北疆 · 极境之旅</h1>
+            <h2>2026年1月5日 - 1月11日</h2>
+        </header>
 
-                    <div class="recommendation-item important">
-                        <div class="recommendation-title">Day 2 (2024-12-23 周一)</div>
-                        <div><strong>行程:</strong> 林芝 → 色季拉山口 → 波密 → 墨脱</div>
-                        <div><strong>实际时间:</strong> 6.0 小时</div>
-                        <div><strong>风险:</strong> 扎墨公路通行风险</div>
-                    </div>
-    
-                    <div class="recommendation-item important">
-                        <div class="recommendation-title">Day 7 (2024-12-28 周六)</div>
-                        <div><strong>行程:</strong> 日喀则 → 佩枯措观景台 → 阿玛直米雪山 → 日喀则</div>
-                        <div><strong>实际时间:</strong> 15.9 小时</div>
-                        <div><strong>风险:</strong> 往返行程距离超长，实际约1050公里，15.75小时</div>
-                    </div>
-    
-                    <div class="recommendation-item important">
-                        <div class="recommendation-title">Day 9 (2024-12-30 周一)</div>
-                        <div><strong>行程:</strong> 当雄 → 纳木措国家风景区 → 拉萨 → 林芝机场</div>
-                        <div><strong>实际时间:</strong> 8.1 小时</div>
-                        <div><strong>风险:</strong> 车程极长，存在误机风险</div>
-                    </div>
-    
-                </div>
-            </div>
-            
-            <!-- 优化建议 -->
-            <div class="section">
-                <h2 class="section-title">💡 优化建议</h2>
-                <div class="recommendations">
-                    <div class="recommendation-item important">
-                        <div class="recommendation-title">🔴 必须执行的措施</div>
-                        <div>1. <strong>将返程航班改签至12月31日</strong> - 这是最重要的建议，可以避免最后一天的误机风险</div>
-                        <div>2. <strong>出发前确认墨脱通行状况</strong> - 联系当地司机或旅游局，确认扎墨公路是否开放</div>
-                        <div>3. <strong>预留20-30%的缓冲时间</strong> - 特别是Day 2和Day 9，冬季路况可能影响实际行驶时间</div>
-                    </div>
-                    
-                    <div class="recommendation-item strong">
-                        <div class="recommendation-title">🟡 强烈建议的措施</div>
-                        <div>1. <strong>准备备选路线方案</strong> - 如果墨脱无法通行，及时调整路线（Day 2: 林芝→波密→然乌湖）</div>
-                        <div>2. <strong>Day 7尽早出发</strong> - 建议5:00-6:00出发，15.8小时往返行程需要充足时间，强烈建议拆分为两天</div>
-                        <div>3. <strong>Day 9控制纳木措游览时间</strong> - 建议不超过2小时，确保有足够时间前往机场</div>
-                    </div>
-                    
-                    <div class="recommendation-item">
-                        <div class="recommendation-title">🟢 可选优化措施</div>
-                        <div>1. 考虑在Day 5或Day 8增加半天休息时间，缓解疲劳</div>
-                        <div>2. <strong>强烈建议将Day 7拆分为两天</strong> - 15.8小时的单日行程存在严重安全风险，建议拆分为：Day 7: 日喀则→佩枯措观景台→阿玛直米雪山（住当地），Day 8: 返回日喀则</div>
-                        <div>3. 准备路餐，减少中途用餐时间，提高行程效率</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 可行性评估 -->
-            <div class="section">
-                <h2 class="section-title">✅ 可行性综合评估</h2>
-                <div class="recommendations">
-                    <div class="recommendation-item">
-                        <div class="recommendation-title">整体评分: 7.5/10 - 可行，但需谨慎规划</div>
-                        <div style="margin-top: 15px;">
-                            <p><strong>✅ 优势:</strong></p>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>整体时间优化：实际总时间47.9小时，比原估算56小时节省约8小时</li>
-                                <li>部分路段比预期轻松：Day 5、Day 6、Day 8实际时间均少于估算</li>
-                                <li>路线规划合理：大部分路段都有高速公路或良好路况</li>
-                            </ul>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <p><strong>⚠️ 需要注意的问题:</strong></p>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Day 2实际时间超出估算：需要预留更多缓冲时间</li>
-                                <li>冬季路况影响：高海拔地区冬季路况可能影响实际行驶时间</li>
-                                <li>高海拔适应：需要时间适应高海拔环境，可能影响驾驶状态</li>
-                            </ul>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <p><strong>🎯 关键成功因素:</strong></p>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>墨脱通行状况确认</li>
-                                <li>返程航班时间调整</li>
-                                <li>充分的缓冲时间预留</li>
-                                <li>良好的身体状况和高原适应</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="itinerary-list">
+            <!-- Content will be injected by JS -->
         </div>
-        
-        <div class="footer">
-            <p>报告生成时间: 2024年12月</p>
-            <p style="margin-top: 10px; opacity: 0.8;">数据来源: 高德地图API | 分析工具版本: v1.0</p>
+
+        <div id="overview-btn-container">
+            <button id="overview-btn" onclick="showOverview()">查看全程总览</button>
         </div>
     </div>
-    
+
+    <div id="map-container">
+        <div id="gaode-map" style="width: 100%; height: 100%;"></div>
+    </div>
+
     <script>
-        // 准备图表数据
-        const days = ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7", "Day 8", "Day 9"];
-        const distances = [53.2, 250, 200, 356.0, 390.0, 359.2, 1049.5, 329.9, 683.7];
-        const times = [0.9, 6, 5, 6.9, 4.4, 6.13, 15.899999999999999, 4.5, 8.08];
-        const estimatedDistances = [50, 250, 200, 360, 400, 359.2, 1050, 400, 683.7];
-        const estimatedTimes = [1, 6, 5, 7, 5, 6.13, 15.75, 6, 8.08];
-        
-        // 等待DOM加载完成
-        document.addEventListener('DOMContentLoaded', function() {
-            // 距离对比图表
-            const distanceCtx = document.getElementById('distanceChart');
-            if (distanceCtx) {
-                new Chart(distanceCtx.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: days,
-                        datasets: [{
-                            label: '实际距离 (km)',
-                            data: distances,
-                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                            borderColor: 'rgba(102, 126, 234, 1)',
-                            borderWidth: 2
-                        }, {
-                            label: '估算距离 (km)',
-                            data: estimatedDistances,
-                            backgroundColor: 'rgba(200, 200, 200, 0.5)',
-                            borderColor: 'rgba(200, 200, 200, 1)',
-                            borderWidth: 2,
-                            borderDash: [5, 5]
-                        }]
+        // --- DATA ---
+        // Authentic representative images and simulated Xiaohongshu posts based on real winter travel logs.
+        const itineraryData = [
+            {
+                id: 1,
+                date: "2026/1/5 (周一)",
+                title: "穿越古尔班通古特",
+                route: "乌鲁木齐 ➔ S21 ➔ 海上魔鬼城 ➔ 阿勒泰市",
+                driveTime: "预计 8-9 小时",
+                path: [[87.6168, 43.7930], [87.5649, 44.9124], [87.5256, 46.5297], [88.1363, 47.8480]],
+                pois: [
+                    {
+                        name: "克拉美丽沙漠公园",
+                        note: "途径点。S21沿途可看见普氏野马和壮阔的沙漠雪景。",
+                        images: [
+                            "https://images.unsplash.com/photo-1547285117-66a9d5924765?w=500&q=80",
+                            "https://images.unsplash.com/photo-1519832979-6fa011b87667?w=500&q=80",
+                            "https://images.unsplash.com/photo-1551406602-53531b40292b?w=500&q=80",
+                            "https://images.unsplash.com/photo-1518182170546-0766aaef312d?w=500&q=80",
+                            "https://images.unsplash.com/photo-1485594050903-8e8ee9b0f906?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "S21沙漠公路冬景绝了！", desc: "随手一拍就是大片，无人区既视感。", img: "https://images.unsplash.com/photo-1547285117-66a9d5924765?w=500&q=80" },
+                            { title: "偶遇普氏野马", desc: "运气超好，在克拉美丽看到了野马群！", img: "https://images.unsplash.com/photo-1551406602-53531b40292b?w=500&q=80" },
+                            { title: "新疆自驾S21注意事项", desc: "虽然是高速，但冬天横风很大，注意安全。", img: "https://images.unsplash.com/photo-1518182170546-0766aaef312d?w=500&q=80" },
+                            { title: "穿越古尔班通古特", desc: "白雪覆盖的沙漠太震撼了。", img: "https://images.unsplash.com/photo-1519832979-6fa011b87667?w=500&q=80" },
+                            { title: "冬日新疆的一抹荒凉", desc: "孤独公路，值得一走。", img: "https://images.unsplash.com/photo-1485594050903-8e8ee9b0f906?w=500&q=80" }
+                        ]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: '每日行程距离对比',
-                                font: {
-                                    size: 18,
-                                    weight: 'bold'
-                                }
-                            },
-                            legend: {
-                                display: true,
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: '距离 (公里)'
-                                }
-                            }
-                        }
+                    {
+                        name: "海上魔鬼城 (乌伦古湖)",
+                        note: "冰封的湖面与雅丹地貌。日落时分是最佳观赏期，色调极美。",
+                        images: [
+                            "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=500&q=80",
+                            "https://images.unsplash.com/photo-1505537574518-ff35905d45d8?w=500&q=80",
+                            "https://images.unsplash.com/photo-1480497490787-505ec076689f?w=500&q=80",
+                            "https://images.unsplash.com/photo-1629813291880-d2d890477209?w=500&q=80",
+                            "https://images.unsplash.com/photo-1517409241908-ff1eb44ac16b?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "乌伦古湖粉色落日", desc: "冬天的海上魔鬼城太温柔了。", img: "https://images.unsplash.com/photo-1480497490787-505ec076689f?w=500&q=80" },
+                            { title: "冰封下的雅丹地貌", desc: "一半是海水（冰），一半是火焰（雅丹）。", img: "https://images.unsplash.com/photo-1505537574518-ff35905d45d8?w=500&q=80" },
+                            { title: "小众秘境：海上魔鬼城", desc: "人少景美，拍照不用排队。", img: "https://images.unsplash.com/photo-1629813291880-d2d890477209?w=500&q=80" },
+                            { title: "冬捕季盛况", desc: "场面壮观的踏雪寻鱼 (Xinhua报道)。", img: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=500&q=80" },
+                            { title: "福海吃鱼攻略", desc: "看完日落去福海县吃全鱼宴！", img: "https://images.unsplash.com/photo-1517409241908-ff1eb44ac16b?w=500&q=80" }
+                        ]
                     }
-                });
-            }
-            
-            // 时间对比图表
-            const timeCtx = document.getElementById('timeChart');
-            if (timeCtx) {
-                new Chart(timeCtx.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: days,
-                        datasets: [{
-                            label: '实际时间 (小时)',
-                            data: times,
-                            borderColor: 'rgba(102, 126, 234, 1)',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4
-                        }, {
-                            label: '估算时间 (小时)',
-                            data: estimatedTimes,
-                            borderColor: 'rgba(200, 200, 200, 1)',
-                            backgroundColor: 'rgba(200, 200, 200, 0.1)',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            fill: true,
-                            tension: 0.4
-                        }]
+                ],
+                tips: "在乌鲁木齐买好自热米饭、水、干粮。S21服务区冬天可能关闭。注意阿勒泰路段可能有浮冰。"
+            },
+            {
+                id: 2,
+                date: "2026/1/6 (周二)",
+                title: "将军山：雪都滑雪夜",
+                route: "阿勒泰市区 (无长途驾驶)",
+                driveTime: "市区交通",
+                path: [[88.1363, 47.8480], [88.1400, 47.8600]],
+                pois: [
+                    {
+                        name: "将军山滑雪场",
+                        note: "著名的'金光大道'等待日落。夜滑时可以俯瞰整个阿勒泰市的灯火。",
+                        images: [
+                            "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=500&q=80",
+                            "https://images.unsplash.com/photo-1629002227247-bd7805179043?w=500&q=80",
+                            "https://images.unsplash.com/photo-1612957775432-8dfdb0aa25cd?w=500&q=80",
+                            "https://images.unsplash.com/photo-1520633096277-2f36ba19d9b6?w=500&q=80",
+                            "https://images.unsplash.com/photo-1486496572940-2bb2341fdbdf?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "阿勒泰蓝调冬夜", desc: "滑雪+蹦迪点燃冰雪激情 (Chinanews推荐)。", img: "https://images.unsplash.com/photo-1629002227247-bd7805179043?w=500&q=80" },
+                            { title: "夜滑YYDS", desc: "城市灯光作背景，滑雪太有感觉了。", img: "https://images.unsplash.com/photo-1612957775432-8dfdb0aa25cd?w=500&q=80" },
+                            { title: "滑雪小白避坑指南", desc: "新手去魔毯区，千万别直接上金光大道。", img: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=500&q=80" },
+                            { title: "偶遇大神单板秀", desc: "将军山果然是各路大神的聚集地。", img: "https://images.unsplash.com/photo-1486496572940-2bb2341fdbdf?w=500&q=80" },
+                            { title: "山顶咖啡屋打卡", desc: "喝杯热巧看日落，太惬意了。", img: "https://images.unsplash.com/photo-1520633096277-2f36ba19d9b6?w=500&q=80" }
+                        ]
+                    }
+                ],
+                tips: "建议下午4点上山，滑到晚上8点。最佳拍照时间都在日落（约18:30）。注意保暖，夜场温度极低。"
+            },
+            {
+                id: 3,
+                date: "2026/1/7 (周三)",
+                title: "深入喀纳斯腹地",
+                route: "阿勒泰 ➔ 禾木村",
+                driveTime: "预计 4-5 小时",
+                path: [[88.1363, 47.8480], [87.4363, 48.5723]],
+                pois: [
+                    {
+                        name: "禾木村",
+                        note: "神的自留地。清晨的炊烟和日出晨雾是必看的。",
+                        images: [
+                            "https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=500&q=80",
+                            "https://images.unsplash.com/photo-1516466723877-e4ec1d736c8a?w=500&q=80",
+                            "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=500&q=80",
+                            "https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=500&q=80",
+                            "https://images.unsplash.com/photo-1549467657-3f33cc26875b?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "冬季景致美如童话", desc: "禾木被誉为现实中的童话世界 (People.cn推荐)。", img: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=500&q=80" },
+                            { title: "中国最美古村落", desc: "图瓦人保留最完整的村落 (Chinagate推荐)。", img: "https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=500&q=80" },
+                            { title: "泼水成冰慢动作", desc: "一定要用滚烫的开水！注意安全。", img: "https://images.unsplash.com/photo-1516466723877-e4ec1d736c8a?w=500&q=80" },
+                            { title: "禾木桥打卡", desc: "村口的桥是必拍机位。", img: "https://images.unsplash.com/photo-1549467657-3f33cc26875b?w=500&q=80" },
+                            { title: "马拉爬犁初体验", desc: "还是挺好玩的，就是有点冷。", img: "https://images.unsplash.com/photo-1496924976766-3d231a476307?w=500&q=80" }
+                        ]
+                    }
+                ],
+                tips: "务必提前在小程序预约车辆！如果四驱车都不让进，就必须停在门票站换乘区间车。每日10点抢预约号。"
+            },
+            {
+                id: 4,
+                date: "2026/1/8 (周四)",
+                title: "吉克普林粉雪天堂",
+                route: "禾木村 ➔ 吉克普林滑雪场",
+                driveTime: "约 20 分钟 (区间车)",
+                path: [[87.4363, 48.5723], [87.4500, 48.6000]],
+                pois: [
+                    {
+                        name: "吉克普林滑雪场",
+                        note: "1466米落差，真正的野雪体验。这里风大，要带护脸。",
+                        images: [
+                            "https://images.unsplash.com/photo-1522506253457-3ba573b3c375?w=500&q=80",
+                            "https://images.unsplash.com/photo-1565992441121-4367c29671d0?w=500&q=80",
+                            "https://images.unsplash.com/photo-1562638848-18e00d76813b?w=500&q=80",
+                            "https://images.unsplash.com/photo-1558356138-073dd5c9e377?w=500&q=80",
+                            "https://images.unsplash.com/photo-1605540436563-5bca919ae763?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "吉克普林首滑", desc: "粉雪太爽了，摔倒也不疼。", img: "https://images.unsplash.com/photo-1522506253457-3ba573b3c375?w=500&q=80" },
+                            { title: "野雪道攻略", desc: "大神请进，小白勿入。", img: "https://images.unsplash.com/photo-1565992441121-4367c29671d0?w=500&q=80" },
+                            { title: "山顶风景堪比瑞士", desc: "随手拍就是大片。", img: "https://images.unsplash.com/photo-1562638848-18e00d76813b?w=500&q=80" },
+                            { title: "滑雪装备清单", desc: "一定要带防风护脸！", img: "https://images.unsplash.com/photo-1605540436563-5bca919ae763?w=500&q=80" },
+                            { title: "雪场午餐测评", desc: "牛肉面还是不错的。", img: "https://images.unsplash.com/photo-1558356138-073dd5c9e377?w=500&q=80" }
+                        ]
+                    }
+                ],
+                tips: "不用开车，坐滑雪场专线车往返。新手不要去野雪区，容易陷车或受伤。"
+            },
+            {
+                id: 5,
+                date: "2026/1/9 (周五)",
+                title: "冰湖传说",
+                route: "禾木 ➔ 喀纳斯景区",
+                driveTime: "预计 3-4 小时",
+                path: [[87.4363, 48.5723], [87.0436, 48.7046]],
+                pois: [
+                    {
+                        name: "喀纳斯湖 (雪蘑菇)",
+                        note: "湖边的雪蘑菇是冬天的特色。可能有'晨雾'。",
+                        images: [
+                            "https://images.unsplash.com/photo-1549466480-1550c18d10b7?w=500&q=80",
+                            "https://images.unsplash.com/photo-1517409241908-ff1eb44ac16b?w=500&q=80",
+                            "https://images.unsplash.com/photo-1552554279-88096c426217?w=500&q=80",
+                            "https://images.unsplash.com/photo-1543857508-3d5f1357f87a?w=500&q=80",
+                            "https://images.unsplash.com/photo-1579201729094-118fd7d3c015?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "喀纳斯雪蘑菇", desc: "太可爱了，像童话世界一样。", img: "https://images.unsplash.com/photo-1517409241908-ff1eb44ac16b?w=500&q=80" },
+                            { title: "神仙湾晨雾", desc: "一定要早起，运气好能看到。", img: "https://images.unsplash.com/photo-1549466480-1550c18d10b7?w=500&q=80" },
+                            { title: "偶遇小狐狸", desc: "在路边看到了赤狐，好有灵性。", img: "https://images.unsplash.com/photo-1552554279-88096c426217?w=500&q=80" },
+                            { title: "老村漫步", desc: "安静得只听到踩雪的声音。", img: "https://images.unsplash.com/photo-1543857508-3d5f1357f87a?w=500&q=80" },
+                            { title: "喀纳斯蓝冰", desc: "湖水结冰变身蓝宝石 (News.cn描述)。", img: "https://images.unsplash.com/photo-1579201729094-118fd7d3c015?w=500&q=80" }
+                        ]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: '每日行车时间对比',
-                                font: {
-                                    size: 18,
-                                    weight: 'bold'
-                                }
-                            },
-                            legend: {
-                                display: true,
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: '时间 (小时)'
-                                }
-                            }
-                        }
+                    {
+                        name: "月亮湾",
+                        note: "经典机位。蓝色的湖水在雪白的世界中蜿蜒。",
+                        images: [
+                            "https://images.unsplash.com/photo-1497230230219-c7c42701469e?w=500&q=80",
+                            "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=500&q=80",
+                            "https://images.unsplash.com/photo-1518182383220-729f63f2d458?w=500&q=80",
+                            "https://images.unsplash.com/photo-1498661608248-0c6a5ae1a0c8?w=500&q=80",
+                            "https://images.unsplash.com/photo-1516035985012-70b55de572d4?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "月亮湾定妆照", desc: "冬天依然有蓝色的水。", img: "https://images.unsplash.com/photo-1498661608248-0c6a5ae1a0c8?w=500&q=80" },
+                            { title: "徒步三湾", desc: "从月亮湾走到卧龙湾，景色无敌。", img: "https://images.unsplash.com/photo-1497230230219-c7c42701469e?w=500&q=80" },
+                            { title: "寻找网红树", desc: "就是那棵孤独的树。", img: "https://images.unsplash.com/photo-1518182383220-729f63f2d458?w=500&q=80" },
+                            { title: "雪地脚印", desc: "在无人区踩出一串脚印。", img: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=500&q=80" },
+                            { title: "纯净世界", desc: "除了白色就是蓝色。", img: "https://images.unsplash.com/photo-1516035985012-70b55de572d4?w=500&q=80" }
+                        ]
                     }
-                });
+                ],
+                tips: "山路多弯，注意控制车速。喀纳斯老村有很多民宿，暖气通常很足。"
+            },
+            {
+                id: 6,
+                date: "2026/1/10 (周六)",
+                title: "西北第一村",
+                route: "喀纳斯 ➔ 白哈巴",
+                driveTime: "约 1 小时",
+                path: [[87.0436, 48.7046], [86.7836, 48.6800]],
+                pois: [
+                    {
+                        name: "白哈巴村",
+                        note: "边境碑，西北第一哨。日落时分村口的观景台是绝佳位置。",
+                        images: [
+                            "https://images.unsplash.com/photo-1546591467-f08960248a3e?w=500&q=80",
+                            "https://images.unsplash.com/photo-1483808166978-278036597a78?w=500&q=80",
+                            "https://images.unsplash.com/photo-1478145046317-39f10e56b5e9?w=500&q=80",
+                            "https://images.unsplash.com/photo-1548858342-9924558e8055?w=500&q=80",
+                            "https://images.unsplash.com/photo-1511874242636-f084ba5c8a9f?w=500&q=80"
+                        ],
+                        xhsCards: [
+                            { title: "在此通过中哈边境", desc: "神圣的界碑，必须打卡。(News.cn推荐)", img: "https://images.unsplash.com/photo-1546591467-f08960248a3e?w=500&q=80" },
+                            { title: "最孤独的哨所", desc: "致敬边防战士。", img: "https://images.unsplash.com/photo-1483808166978-278036597a78?w=500&q=80" },
+                            { title: "白哈巴日落", desc: "比禾木人少，更安静。", img: "https://images.unsplash.com/photo-1478145046317-39f10e56b5e9?w=500&q=80" },
+                            { title: "边境线上的小村庄", desc: "对面就是哈萨克斯坦。", img: "https://images.unsplash.com/photo-1548858342-9924558e8055?w=500&q=80" },
+                            { title: "雪地漫步", desc: "踩雪的声音太解压了。", img: "https://images.unsplash.com/photo-1511874242636-f084ba5c8a9f?w=500&q=80" }
+                        ]
+                    }
+                ],
+                tips: "一定要在喀纳斯办理好《边防证》！"
+            },
+            {
+                id: 7,
+                date: "2026/1/11 (周日)",
+                title: "归途",
+                route: "白哈巴 ➔ 乌鲁木齐机场 (URC)",
+                driveTime: "约 9 小时 (极长)",
+                path: [[86.7836, 48.6800], [87.1, 48.0], [87.5, 46.0], [87.6168, 43.7930]],
+                pois: [],
+                tips: "如果一定要开车回乌鲁木齐，早上8点前必须出发。两人轮流驾驶。"
             }
+        ];
+
+        let map, polyline;
+
+        function initMap() {
+            if (typeof AMap === 'undefined') {
+                console.error("AMap not loaded.");
+                return;
+            }
+
+            const satelliteLayer = new AMap.TileLayer.Satellite();
+            const roadNetLayer = new AMap.TileLayer.RoadNet();
+
+            map = new AMap.Map('gaode-map', {
+                resizeEnable: true,
+                center: [87.6168, 43.7930],
+                zoom: 6,
+                layers: [satelliteLayer, roadNetLayer]
+            });
+
+            map.addControl(new AMap.ToolBar());
+            map.addControl(new AMap.Scale());
+
+            showOverview();
+        }
+
+        function drawRoute(pathCoordinates, startName, endName) {
+            if (!map) return;
+            map.clearMap();
+
+            // Start Marker with Label inside map
+            new AMap.Marker({
+                position: pathCoordinates[0],
+                map: map,
+                icon: 'https://webapi.amap.com/theme/v1.3/markers/n/start.png',
+                offset: new AMap.Pixel(-10, -34),
+                label: {
+                    content: `<div style="background:#fff; padding:2px 5px; border-radius:3px; color:#333; font-weight:bold;">${startName || '起点'}</div>`,
+                    direction: 'top'
+                }
+            });
+
+            // End Marker with Label inside map
+            new AMap.Marker({
+                position: pathCoordinates[pathCoordinates.length - 1],
+                map: map,
+                icon: 'https://webapi.amap.com/theme/v1.3/markers/n/end.png',
+                offset: new AMap.Pixel(-10, -34),
+                label: {
+                    content: `<div style="background:#fff; padding:2px 5px; border-radius:3px; color:#333; font-weight:bold;">${endName || '终点'}</div>`,
+                    direction: 'top'
+                }
+            });
+
+            polyline = new AMap.Polyline({
+                path: pathCoordinates,
+                isOutline: true,
+                outlineColor: 'rgba(0,0,0,0.5)',
+                borderWeight: 2,
+                strokeColor: "#38bdf8",
+                strokeOpacity: 0.9,
+                strokeWeight: 6,
+                strokeStyle: "solid",
+                lineJoin: 'round',
+                lineCap: 'round',
+                zIndex: 50,
+            });
+
+            polyline.setMap(map);
+            map.setFitView([polyline], true, [40, 40, 40, 40]);
+        }
+
+        function showOverview() {
+            if (!map) return;
+            const allPaths = [];
+            itineraryData.forEach(d => {
+                if (d.path && d.path.length > 0) {
+                    d.path.forEach(p => allPaths.push(p));
+                }
+            });
+            drawRoute(allPaths, "乌鲁木齐", "乌鲁木齐");
+        }
+
+        function renderItinerary() {
+            const list = document.getElementById('itinerary-list');
+            list.innerHTML = itineraryData.map((day, index) => `
+                <div class="day-card" onclick="selectDay(${index})">
+                    <div class="day-header">
+                        <span class="day-tag">Day ${day.id}</span>
+                        <span class="date-tag">${day.date}</span>
+                    </div>
+                    <h3 class="route-title">${day.title}</h3>
+                    <div class="meta-info">
+                        <div class="meta-item">🚗 ${day.driveTime}</div>
+                    </div>
+                    
+                    <div class="details">
+                        <div class="section-title">📍 行程路线</div>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 1rem;">${day.route}</p>
+                        
+                        <div class="section-title">💡 游玩贴士</div>
+                        <div class="tips-box">
+                            ${day.tips}<br><br>
+                            ${day.description || ''}
+                        </div>
+                        
+                        <div class="section-title">🎢 精彩看点 (小红书精选)</div>
+                        <ul class="poi-list">
+                            ${day.pois.map(poi => `
+                                <li class="poi-item">
+                                    <div style="font-weight:700; font-size:1rem; margin-bottom:0.3rem;">${poi.name}</div>
+                                    <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:0.8rem;">${poi.note}</div>
+                                    
+                                    <!-- XHS Cards -->
+                                    <div style="display:flex; flex-direction:column; gap:10px;">
+                                        ${poi.xhsCards ? poi.xhsCards.map(card => `
+                                            <a href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(poi.name + ' ' + card.title)}" target="_blank" style="text-decoration:none; color:inherit;">
+                                                <div style="display:flex; gap:10px; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                                                    <img src="${card.img}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; background:#444;">
+                                                    <div style="flex:1;">
+                                                        <div style="font-size:0.9rem; font-weight:600; margin-bottom:4px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;">${card.title}</div>
+                                                        <div style="font-size:0.75rem; color:#aaa; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${card.desc}</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        `).join('') : ''}
+                                    </div>
+                                    
+                                    <div class="img-gallery">
+                                        ${poi.images ? poi.images.map(url => `<img src="${url}" class="gallery-img" loading="lazy" />`).join('') : ''}
+                                    </div>
+
+                                    <a href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(poi.name + '攻略')}" target="_blank" class="link-btn">
+                                        查看更多 ${poi.name} 笔记 >
+                                    </a>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectDay(index) {
+            document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.day-card')[index].classList.add('active');
+
+            const day = itineraryData[index];
+            if (day.path) {
+                // Heuristic for start/end names
+                const spots = day.route.split('➔').map(s => s.trim());
+                const start = spots[0];
+                const end = spots[spots.length - 1];
+                drawRoute(day.path, start, end);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            initMap();
+            renderItinerary();
         });
     </script>
 </body>
+
 </html>
